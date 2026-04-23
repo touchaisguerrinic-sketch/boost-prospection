@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BOOST &middot; Machine de Prospection ETI</title>
+<title>BOOST · Machine de Prospection ETI</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -225,11 +225,83 @@ nav {
 .guide-regle:last-child { border-bottom:none; }
 .guide-regle-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
 
-@media(max-width:700px) {
-  .prospects-grid { grid-template-columns:1fr; padding:16px; }
-  .phases-grid, .guide-actions { grid-template-columns:1fr; }
-  .kpi-strip, .filters { padding:12px 16px; }
+/* ── TABLET (768px) ── */
+@media(max-width:900px) {
+  .prospects-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); padding:16px; }
+  .phases-grid { grid-template-columns:1fr; }
+  .guide-actions { grid-template-columns:1fr; }
+  .sources-grid { grid-template-columns:1fr; }
+  .pipeline-title { font-size:24px; }
+  .kpi-strip { padding:12px 16px; gap:8px; }
+  .kpi-pill-val { font-size:22px; }
   .methode-wrap, .scoring-wrap, .guide-wrap { padding:24px 16px; }
+  .page-h1 { font-size:28px; }
+}
+
+/* ── MOBILE (480px) ── */
+@media(max-width:600px) {
+  /* Nav mobile */
+  nav { padding:0 12px; height:auto; flex-wrap:wrap; gap:8px; padding:10px 12px; }
+  .nav-logo-sub { display:none; }
+  .nav-logo-text { font-size:13px; }
+  .nav-right { width:100%; display:grid; grid-template-columns:repeat(4,1fr); gap:4px; padding-bottom:6px; }
+  .nav-tab { padding:5px 4px; font-size:10px; border-radius:10px; text-align:center; }
+
+  /* Pipeline header */
+  .pipeline-header { padding:16px; }
+  .pipeline-title { font-size:20px; }
+  .pipeline-sub { font-size:11px; }
+
+  /* KPIs — scroll horizontal */
+  .kpi-strip { flex-wrap:nowrap; overflow-x:auto; padding:10px 12px; gap:8px; -webkit-overflow-scrolling:touch; }
+  .kpi-pill { min-width:100px; flex-shrink:0; padding:8px 12px; }
+  .kpi-pill-val { font-size:20px; }
+  .kpi-pill-label { font-size:9px; }
+
+  /* Filters — scroll horizontal */
+  .filters { flex-wrap:nowrap; overflow-x:auto; padding:10px 12px; gap:6px; -webkit-overflow-scrolling:touch; }
+  .filter-label { display:none; }
+  .filter-btn { white-space:nowrap; flex-shrink:0; font-size:11px; padding:4px 10px; }
+  .search-box { min-width:140px; flex-shrink:0; margin-left:0; font-size:11px; }
+
+  /* Cards */
+  .prospects-grid { grid-template-columns:1fr; padding:12px; gap:12px; }
+  .card-nom { font-size:16px; }
+  .card-signal { font-size:10px; }
+  .card-footer { flex-direction:column; align-items:flex-start; gap:8px; }
+  .thumb-names { max-width:200px; }
+
+  /* Convergences */
+  .convergences-banner { margin:0 12px 12px; }
+
+  /* Bouton + */
+  .add-btn { width:44px; height:44px; font-size:22px; bottom:16px; left:16px; }
+
+  /* Realtime badge */
+  #realtime-badge { bottom:16px; right:16px; font-size:10px; padding:5px 10px; }
+
+  /* Modal */
+  .modal { padding:20px; width:95vw; }
+  .modal-large { width:95vw; }
+  .modal-grid { grid-template-columns:1fr; }
+
+  /* Pages internes */
+  .methode-wrap, .scoring-wrap, .guide-wrap { padding:16px 12px; }
+  .page-h1 { font-size:24px; }
+  .page-sub { font-size:13px; margin-bottom:24px; }
+  .section-title { font-size:18px; }
+  .phases-grid, .guide-actions, .sources-grid { grid-template-columns:1fr; }
+
+  /* Scoring */
+  .scoring-total { flex-direction:row; flex-wrap:wrap; padding:16px; gap:12px; }
+  .scoring-seuil { min-width:80px; }
+  .seuil-pts { font-size:20px; }
+  .critere-head { flex-direction:column; align-items:flex-start; gap:6px; }
+  .critere-row { padding:10px 12px; }
+
+  /* Guide */
+  .guide-regles { padding:16px; }
+  .guide-action-head { padding:14px; }
 }
 </style>
 </head>
@@ -237,28 +309,28 @@ nav {
 
 <div id="loader">
   <div class="loader-badge">B</div>
-  <div class="loader-text">Connexion &agrave; Supabase&hellip;</div>
+  <div class="loader-text">Connexion à Supabase…</div>
   <div class="loader-bar"><div class="loader-bar-fill"></div></div>
 </div>
 
 <div id="realtime-badge">
   <div class="rt-dot" id="rt-dot"></div>
-  <span id="rt-label">Connexion&hellip;</span>
+  <span id="rt-label">Connexion…</span>
 </div>
 
 <nav>
   <div class="nav-logo">
     <div class="nav-logo-badge">B</div>
     <div>
-      <div class="nav-logo-text">BOOST &middot; Machine de Prospection ETI</div>
-      <div class="nav-logo-sub">Julhiet Sterwen &middot; Avril 2026</div>
+      <div class="nav-logo-text">BOOST · Machine de Prospection ETI</div>
+      <div class="nav-logo-sub">Julhiet Sterwen · Avril 2026</div>
     </div>
   </div>
   <div class="nav-right">
-    <button class="nav-tab active" onclick="showPage('pipeline',this)">&#128202; Pipeline</button>
-    <button class="nav-tab" onclick="showPage('methode',this)">&#127919; M&eacute;thode</button>
-    <button class="nav-tab" onclick="showPage('scoring',this)">&#128203; Scoring</button>
-    <button class="nav-tab" onclick="showPage('guide',this)">&#128214; Guide</button>
+    <button class="nav-tab active" onclick="showPage('pipeline',this)">📊 Pipeline</button>
+    <button class="nav-tab" onclick="showPage('methode',this)">🎯 Méthode</button>
+    <button class="nav-tab" onclick="showPage('scoring',this)">📋 Scoring</button>
+    <button class="nav-tab" onclick="showPage('guide',this)">📖 Guide</button>
   </div>
 </nav>
 
@@ -267,69 +339,69 @@ nav {
   <div class="pipeline-header">
     <div>
       <div class="pipeline-title">Pipeline Prospection ETI</div>
-      <div class="pipeline-sub" id="pipeline-sub">Chargement&hellip;</div>
+      <div class="pipeline-sub" id="pipeline-sub">Chargement…</div>
     </div>
   </div>
   <div class="kpi-strip">
-    <div class="kpi-pill rose"><div class="kpi-pill-val" id="kpi-total">&mdash;</div><div class="kpi-pill-label">Prospects identifi&eacute;s</div></div>
-    <div class="kpi-pill green"><div class="kpi-pill-val" id="kpi-connectes">&mdash;</div><div class="kpi-pill-label">Connect&eacute;s LinkedIn</div></div>
-    <div class="kpi-pill orange"><div class="kpi-pill-val" id="kpi-attente">&mdash;</div><div class="kpi-pill-label">En attente r&eacute;ponse</div></div>
-    <div class="kpi-pill" style="background:rgba(123,127,181,.15)"><div class="kpi-pill-val" style="color:#A8ABDF" id="kpi-taux">&mdash;</div><div class="kpi-pill-label">Taux acceptation</div></div>
-    <div class="kpi-pill" style="background:rgba(244,160,150,.15);margin-left:auto"><div class="kpi-pill-val" style="color:var(--rose)" id="kpi-votes">&mdash;</div><div class="kpi-pill-label">&#128077; Pouces r&eacute;seau</div></div>
+    <div class="kpi-pill rose"><div class="kpi-pill-val" id="kpi-total">—</div><div class="kpi-pill-label">Prospects identifiés</div></div>
+    <div class="kpi-pill green"><div class="kpi-pill-val" id="kpi-connectes">—</div><div class="kpi-pill-label">Connectés LinkedIn</div></div>
+    <div class="kpi-pill orange"><div class="kpi-pill-val" id="kpi-attente">—</div><div class="kpi-pill-label">En attente réponse</div></div>
+    <div class="kpi-pill" style="background:rgba(123,127,181,.15)"><div class="kpi-pill-val" style="color:#A8ABDF" id="kpi-taux">—</div><div class="kpi-pill-label">Taux acceptation</div></div>
+    <div class="kpi-pill" style="background:rgba(244,160,150,.15);margin-left:auto"><div class="kpi-pill-val" style="color:var(--rose)" id="kpi-votes">—</div><div class="kpi-pill-label">👍 Pouces réseau</div></div>
   </div>
   <div class="filters">
     <span class="filter-label">Filtrer :</span>
     <button class="filter-btn active" onclick="setFilter('tous',this)">Tous</button>
-    <button class="filter-btn" onclick="setFilter('connecte',this)">&#9989; Connect&eacute;s</button>
+    <button class="filter-btn" onclick="setFilter('connecte',this)">✅ Connectés</button>
     <button class="filter-btn" onclick="setFilter('Mutuelles',this)">Mutuelles</button>
     <button class="filter-btn" onclick="setFilter('Hospitality',this)">Hospitality</button>
     <button class="filter-btn" onclick="setFilter('Pharma',this)">Pharma</button>
     <button class="filter-btn" onclick="setFilter('Logistique',this)">Logistique</button>
-    <button class="filter-btn" onclick="setFilter('votes',this)">&#128077; R&eacute;seau actif</button>
-    <input class="search-box" type="text" placeholder="&#128269; Rechercher&hellip;" oninput="setSearch(this.value)"/>
+    <button class="filter-btn" onclick="setFilter('votes',this)">👍 Réseau actif</button>
+    <input class="search-box" type="text" placeholder="🔍 Rechercher…" oninput="setSearch(this.value)"/>
   </div>
   <div id="convergences-banner" class="convergences-banner">
-    <div style="font-size:22px">&#128279;</div>
+    <div style="font-size:22px">🔗</div>
     <div style="font-size:13px;color:#1A6A4A;line-height:1.5">
-      <div style="font-weight:700;margin-bottom:3px">Convergences r&eacute;seau d&eacute;tect&eacute;es !</div>
+      <div style="font-weight:700;margin-bottom:3px">Convergences réseau détectées !</div>
       <div id="convergences-text"></div>
     </div>
   </div>
   <div class="prospects-grid" id="prospects-grid"></div>
 </div>
 
-<!-- M&Eacute;THODE -->
+<!-- MÉTHODE -->
 <div id="page-methode" class="page">
   <div class="methode-wrap">
-    <div class="page-h1">Notre m&eacute;thode de prospection</div>
-    <div class="page-sub">Comment on d&eacute;tecte, qualifie et contacte nos prospects ETI &mdash; de la veille au premier RDV</div>
+    <div class="page-h1">Notre méthode de prospection</div>
+    <div class="page-sub">Comment on détecte, qualifie et contacte nos prospects ETI — de la veille au premier RDV</div>
     <div class="section">
-      <div class="section-title">La d&eacute;marche en 3 phases</div>
+      <div class="section-title">La démarche en 3 phases</div>
       <div class="phases-grid">
-        <div class="phase-card"><div class="phase-head" style="background:var(--rose)">&#128269; PHASE 1 &mdash; D&Eacute;TECTION<br><small style="font-weight:400;opacity:.85">En cours &middot; Avril &rarr; &Eacute;t&eacute; 2026</small></div><div class="phase-body">L'IA surveille <strong>8 alertes Google</strong> en temps r&eacute;el.<br><br>Signaux : nominations, lev&eacute;es de fonds, r&eacute;organisations, M&A, interviews.<br><br>Sources : presse sp&eacute;cialis&eacute;e, METI, LinkedIn, FAQ-Logistique&hellip;</div></div>
-        <div class="phase-card"><div class="phase-head" style="background:var(--orange)">&#9878;&#65039; PHASE 2 &mdash; QUALIFICATION<br><small style="font-weight:400;opacity:.85">Scoring sur 130 pts</small></div><div class="phase-body">Chaque prospect scor&eacute; sur <strong>5 crit&egrave;res</strong>.<br><br>Crit&egrave;re cl&eacute; : <strong>R&eacute;seau BOOST (30 pts)</strong> &mdash; un consultant conna&icirc;t-il cette personne ?<br><br>Seuil : &ge;70 pts pour inviter.</div></div>
-        <div class="phase-card"><div class="phase-head" style="background:var(--green)">&#128232; PHASE 3 &mdash; CONTACT<br><small style="font-weight:400;opacity:.85">LinkedIn first</small></div><div class="phase-body">Invitation LinkedIn <strong>sans note</strong>.<br><br>Message personnalis&eacute; <strong>apr&egrave;s acceptation uniquement</strong>.<br><br>R&egrave;gle d'or : chercher d'abord un lien r&eacute;seau BOOST.</div></div>
+        <div class="phase-card"><div class="phase-head" style="background:var(--rose)">🔍 PHASE 1 — DÉTECTION<br><small style="font-weight:400;opacity:.85">En cours · Avril → Été 2026</small></div><div class="phase-body">L'IA surveille <strong>8 alertes Google</strong> en temps réel.<br><br>Signaux : nominations, levées de fonds, réorganisations, M&A, interviews.<br><br>Sources : presse spécialisée, METI, LinkedIn, FAQ-Logistique…</div></div>
+        <div class="phase-card"><div class="phase-head" style="background:var(--orange)">⚖️ PHASE 2 — QUALIFICATION<br><small style="font-weight:400;opacity:.85">Scoring sur 130 pts</small></div><div class="phase-body">Chaque prospect scoré sur <strong>5 critères</strong>.<br><br>Critère clé : <strong>Réseau BOOST (30 pts)</strong> — un consultant connaît-il cette personne ?<br><br>Seuil : ≥70 pts pour inviter.</div></div>
+        <div class="phase-card"><div class="phase-head" style="background:var(--green)">📨 PHASE 3 — CONTACT<br><small style="font-weight:400;opacity:.85">LinkedIn first</small></div><div class="phase-body">Invitation LinkedIn <strong>sans note</strong>.<br><br>Message personnalisé <strong>après acceptation uniquement</strong>.<br><br>Règle d'or : chercher d'abord un lien réseau BOOST.</div></div>
       </div>
     </div>
     <div class="section">
       <div class="section-title">Les signaux faibles qu'on surveille</div>
       <div class="signals-list">
-        <div class="signal-item"><div class="signal-pts">40</div><div><div class="signal-title">&#9889; Nomination &lt; 30 jours</div><div class="signal-desc">Le signal le plus puissant. Nouveau dirigeant = feuille de route &agrave; construire.</div></div></div>
-        <div class="signal-item"><div class="signal-pts">35</div><div><div class="signal-title">&#128176; Lev&eacute;e de fonds / M&A / AO</div><div class="signal-desc">Phase d'acc&eacute;l&eacute;ration. Besoin fort d'accompagnement transformation.</div></div></div>
-        <div class="signal-item"><div class="signal-pts">30</div><div><div class="signal-title">&#128197; Nomination 30-90 jours</div><div class="signal-desc">Signal encore exploitable. Le dirigeant construit sa feuille de route.</div></div></div>
-        <div class="signal-item"><div class="signal-pts">25</div><div><div class="signal-title">&#127959; Cr&eacute;ation nouvelle direction</div><div class="signal-desc">Tout est &agrave; structurer : gouvernance, process, &eacute;quipe.</div></div></div>
-        <div class="signal-item"><div class="signal-pts">20</div><div><div class="signal-title">&#128226; Interview / prise de parole</div><div class="signal-desc">Le dirigeant s'exprime = mode ouverture. Moment propice au premier contact.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">40</div><div><div class="signal-title">⚡ Nomination &lt; 30 jours</div><div class="signal-desc">Le signal le plus puissant. Nouveau dirigeant = feuille de route à construire.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">35</div><div><div class="signal-title">💰 Levée de fonds / M&A / AO</div><div class="signal-desc">Phase d'accélération. Besoin fort d'accompagnement transformation.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">30</div><div><div class="signal-title">📅 Nomination 30-90 jours</div><div class="signal-desc">Signal encore exploitable. Le dirigeant construit sa feuille de route.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">25</div><div><div class="signal-title">🏗 Création nouvelle direction</div><div class="signal-desc">Tout est à structurer : gouvernance, process, équipe.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">20</div><div><div class="signal-title">📢 Interview / prise de parole</div><div class="signal-desc">Le dirigeant s'exprime = mode ouverture. Moment propice au premier contact.</div></div></div>
       </div>
     </div>
     <div class="section">
-      <div class="section-title">Nos sources de d&eacute;tection</div>
+      <div class="section-title">Nos sources de détection</div>
       <div class="sources-grid">
-        <div class="source-item"><div class="source-icon">&#128202;</div><div><div class="source-title">Google Alerts (8 alertes actives)</div><div class="source-desc">Nominations, plans strat&eacute;giques &mdash; tous secteurs ETI &mdash; chaque matin</div></div></div>
-        <div class="source-item"><div class="source-icon">&#127976;</div><div><div class="source-title">TendanceHotellerie.fr</div><div class="source-desc">Nominations DG et directeurs dans l'h&ocirc;tellerie fran&ccedil;aise</div></div></div>
-        <div class="source-item"><div class="source-icon">&#127981;</div><div><div class="source-title">L'Usine Nouvelle</div><div class="source-desc">Nominations dirigeants industrie, pharma, agroalimentaire</div></div></div>
-        <div class="source-item"><div class="source-icon">&#128666;</div><div><div class="source-title">FAQ-Logistique.com</div><div class="source-desc">Nominations logistique, transport, supply chain</div></div></div>
-        <div class="source-item"><div class="source-icon">&#128309;</div><div><div class="source-title">Asquarepartners.com</div><div class="source-desc">Nominations mutuelles, assurance, protection sociale</div></div></div>
-        <div class="source-item"><div class="source-icon">&#127942;</div><div><div class="source-title">METI / European ETI Summit</div><div class="source-desc">Dirigeants ETI en vue, prises de parole, ETI Awards</div></div></div>
+        <div class="source-item"><div class="source-icon">📊</div><div><div class="source-title">Google Alerts (8 alertes actives)</div><div class="source-desc">Nominations, plans stratégiques — tous secteurs ETI — chaque matin</div></div></div>
+        <div class="source-item"><div class="source-icon">🏨</div><div><div class="source-title">TendanceHotellerie.fr</div><div class="source-desc">Nominations DG et directeurs dans l'hôtellerie française</div></div></div>
+        <div class="source-item"><div class="source-icon">🏭</div><div><div class="source-title">L'Usine Nouvelle</div><div class="source-desc">Nominations dirigeants industrie, pharma, agroalimentaire</div></div></div>
+        <div class="source-item"><div class="source-icon">🚚</div><div><div class="source-title">FAQ-Logistique.com</div><div class="source-desc">Nominations logistique, transport, supply chain</div></div></div>
+        <div class="source-item"><div class="source-icon">🔵</div><div><div class="source-title">Asquarepartners.com</div><div class="source-desc">Nominations mutuelles, assurance, protection sociale</div></div></div>
+        <div class="source-item"><div class="source-icon">🏆</div><div><div class="source-title">METI / European ETI Summit</div><div class="source-desc">Dirigeants ETI en vue, prises de parole, ETI Awards</div></div></div>
       </div>
     </div>
   </div>
@@ -343,16 +415,16 @@ nav {
     <div class="scoring-total">
       <div class="scoring-seuil"><div class="seuil-pts">130</div><div class="seuil-label">Score max</div></div>
       <div style="width:1px;background:rgba(255,255,255,.1)"></div>
-      <div class="scoring-seuil"><div class="seuil-pts seuil-g">&ge; 90</div><div class="seuil-label">Priorit&eacute; absolue</div><div class="seuil-desc seuil-g">Intro via r&eacute;seau BOOST</div></div>
+      <div class="scoring-seuil"><div class="seuil-pts seuil-g">≥ 90</div><div class="seuil-label">Priorité absolue</div><div class="seuil-desc seuil-g">Intro via réseau BOOST</div></div>
       <div class="scoring-seuil"><div class="seuil-pts seuil-o">70-89</div><div class="seuil-label">On invite LinkedIn</div><div class="seuil-desc seuil-o">Invitation sans note</div></div>
-      <div class="scoring-seuil"><div class="seuil-pts seuil-l">50-69</div><div class="seuil-label">Veille active</div><div class="seuil-desc seuil-l">Si lien r&eacute;seau trouv&eacute;</div></div>
+      <div class="scoring-seuil"><div class="seuil-pts seuil-l">50-69</div><div class="seuil-label">Veille active</div><div class="seuil-desc seuil-l">Si lien réseau trouvé</div></div>
       <div class="scoring-seuil"><div class="seuil-pts seuil-gr">&lt; 50</div><div class="seuil-label">Abandon</div><div class="seuil-desc seuil-gr">Hors cible</div></div>
     </div>
-    <div class="critere-block"><div class="critere-head" style="background:var(--rose)"><div class="critere-head-left"><div class="critere-num">1</div><div class="critere-name">Le Signal</div></div><div class="critere-max">40 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">40</div><div class="critere-row-desc">Nomination &lt; 30 jours</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">35</div><div class="critere-row-desc">Lev&eacute;e de fonds / M&A / Appel d'offres</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">30</div><div class="critere-row-desc">Nomination 30-90 jours</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">25</div><div class="critere-row-desc">Cr&eacute;ation nouvelle direction ou entit&eacute;</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">20</div><div class="critere-row-desc">Interview strat&eacute;gique / prise de parole</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">10</div><div class="critere-row-desc">Signal &gt; 90 jours</div></div></div></div>
-    <div class="critere-block"><div class="critere-head" style="background:var(--orange)"><div class="critere-head-left"><div class="critere-num">2</div><div class="critere-name">Le Profil D&eacute;cisionnel</div></div><div class="critere-max">25 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">25</div><div class="critere-row-desc">DG &middot; PDG &middot; CEO &middot; Pr&eacute;sident</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">20</div><div class="critere-row-desc">DGA &middot; COO &middot; CFO &middot; Secr&eacute;taire G&eacute;n&eacute;ral</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">Dir. Transformation &middot; DSI &middot; Dir. RH</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">Directeur m&eacute;tier</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">Manager sans pouvoir de d&eacute;cision</div></div></div></div>
-    <div class="critere-block"><div class="critere-head" style="background:var(--lavender)"><div class="critere-head-left"><div class="critere-num">3</div><div class="critere-name">L'Entreprise</div></div><div class="critere-max">20 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">20</div><div class="critere-row-desc">ETI 500-5000 sal. &middot; ind&eacute;pendante ou familiale</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">18</div><div class="critere-row-desc">Scale-up en forte croissance (lev&eacute;e &gt; 10M&euro;)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">ETI 250-500 sal.</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">Filiale de grand groupe avec autonomie</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">Grand groupe / PME &lt; 250 sal.</div></div></div></div>
-    <div class="critere-block"><div class="critere-head" style="background:var(--green)"><div class="critere-head-left"><div class="critere-num">4</div><div class="critere-name">Ancrage R&eacute;seau BOOST &#11088;</div></div><div class="critere-max">30 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">30</div><div class="critere-row-desc"><strong>Consultant BOOST en/ex-mission chez cette entreprise</strong></div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">25</div><div class="critere-row-desc">Consultant BOOST conna&icirc;t personnellement le contact</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">20</div><div class="critere-row-desc">Relation via client commun ou ancien coll&egrave;gue</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">Contact dans r&eacute;seau 1er degr&eacute; d'un consultant</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">0</div><div class="critere-row-desc">Aucun lien r&eacute;seau identifi&eacute;</div></div></div></div>
-    <div class="critere-block"><div class="critere-head" style="background:#4EC9B0"><div class="critere-head-left"><div class="critere-num">5</div><div class="critere-name">Accessibilit&eacute; LinkedIn</div></div><div class="critere-max">15 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">15</div><div class="critere-row-desc">1er degr&eacute; (d&eacute;j&agrave; connect&eacute;)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">12</div><div class="critere-row-desc">2e degr&eacute; (ami d'un ami)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">3e degr&eacute; avec relation commune connue</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">3e degr&eacute; sans relation commune</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">0</div><div class="critere-row-desc">Profil priv&eacute; / non trouv&eacute;</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:var(--rose)"><div class="critere-head-left"><div class="critere-num">1</div><div class="critere-name">Le Signal</div></div><div class="critere-max">40 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">40</div><div class="critere-row-desc">Nomination &lt; 30 jours</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">35</div><div class="critere-row-desc">Levée de fonds / M&A / Appel d'offres</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">30</div><div class="critere-row-desc">Nomination 30-90 jours</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">25</div><div class="critere-row-desc">Création nouvelle direction ou entité</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">20</div><div class="critere-row-desc">Interview stratégique / prise de parole</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">10</div><div class="critere-row-desc">Signal &gt; 90 jours</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:var(--orange)"><div class="critere-head-left"><div class="critere-num">2</div><div class="critere-name">Le Profil Décisionnel</div></div><div class="critere-max">25 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">25</div><div class="critere-row-desc">DG · PDG · CEO · Président</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">20</div><div class="critere-row-desc">DGA · COO · CFO · Secrétaire Général</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">Dir. Transformation · DSI · Dir. RH</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">Directeur métier</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">Manager sans pouvoir de décision</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:var(--lavender)"><div class="critere-head-left"><div class="critere-num">3</div><div class="critere-name">L'Entreprise</div></div><div class="critere-max">20 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">20</div><div class="critere-row-desc">ETI 500-5000 sal. · indépendante ou familiale</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">18</div><div class="critere-row-desc">Scale-up en forte croissance (levée &gt; 10M€)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">ETI 250-500 sal.</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">Filiale de grand groupe avec autonomie</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">Grand groupe / PME &lt; 250 sal.</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:var(--green)"><div class="critere-head-left"><div class="critere-num">4</div><div class="critere-name">Ancrage Réseau BOOST ⭐</div></div><div class="critere-max">30 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">30</div><div class="critere-row-desc"><strong>Consultant BOOST en/ex-mission chez cette entreprise</strong></div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">25</div><div class="critere-row-desc">Consultant BOOST connaît personnellement le contact</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">20</div><div class="critere-row-desc">Relation via client commun ou ancien collègue</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">Contact dans réseau 1er degré d'un consultant</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">0</div><div class="critere-row-desc">Aucun lien réseau identifié</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:#4EC9B0"><div class="critere-head-left"><div class="critere-num">5</div><div class="critere-name">Accessibilité LinkedIn</div></div><div class="critere-max">15 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">15</div><div class="critere-row-desc">1er degré (déjà connecté)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">12</div><div class="critere-row-desc">2e degré (ami d'un ami)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">3e degré avec relation commune connue</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">3e degré sans relation commune</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">0</div><div class="critere-row-desc">Profil privé / non trouvé</div></div></div></div>
   </div>
 </div>
 
@@ -360,19 +432,19 @@ nav {
 <div id="page-guide" class="page">
   <div class="guide-wrap">
     <div class="page-h1">Guide des consultants</div>
-    <div class="page-sub">L'IA d&eacute;tecte les signaux publics. Vous, vous connaissez les gens. C'est la combinaison des deux qui cr&eacute;e le flux d'opportunit&eacute;s.</div>
+    <div class="page-sub">L'IA détecte les signaux publics. Vous, vous connaissez les gens. C'est la combinaison des deux qui crée le flux d'opportunités.</div>
     <div class="guide-actions">
-      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--rose)"><div class="guide-action-num">&#128077;</div><div class="guide-action-title">Mettez un pouce sur un prospect</div></div><div class="guide-action-body"><strong>Comment :</strong><br>&rarr; Allez dans Pipeline<br>&rarr; Trouvez le prospect que vous connaissez<br>&rarr; Cliquez &#128077; et entrez votre pr&eacute;nom<br><br><strong>Pourquoi :</strong><br>Chaque pouce = une connexion r&eacute;seau. Si vous connaissez quelqu'un, c'est <strong>vous</strong> qui faites l'intro.</div></div>
-      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--orange)"><div class="guide-action-num">&#128225;</div><div class="guide-action-title">Signalez un cross-selling</div></div><div class="guide-action-body"><strong>Comment :</strong><br>&rarr; Vous &ecirc;tes en mission chez un client<br>&rarr; Vous d&eacute;tectez un besoin dans un autre p&eacute;rim&egrave;tre<br>&rarr; 1 message &agrave; Guillaume ou Clarisse<br><br><strong>Pourquoi :</strong><br>1 signal &times; 50 consultants = 50 leads / semaine. C'est notre avantage comp&eacute;titif.</div></div>
-      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--green)"><div class="guide-action-num">&#129309;</div><div class="guide-action-title">Partagez vos contacts ETI</div></div><div class="guide-action-body"><strong>Comment :</strong><br>&rarr; Sara & Lisa vous contactent<br>&rarr; Partagez 2 contacts minimum<br>&rarr; D&eacute;cideurs ETI, anciens clients<br><br><strong>Pourquoi :</strong><br>50 consultants &times; 2 contacts = 100 leads qualifi&eacute;s. Puis on scale x10.</div></div>
+      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--rose)"><div class="guide-action-num">👍</div><div class="guide-action-title">Mettez un pouce sur un prospect</div></div><div class="guide-action-body"><strong>Comment :</strong><br>→ Allez dans Pipeline<br>→ Trouvez le prospect que vous connaissez<br>→ Cliquez 👍 et entrez votre prénom<br><br><strong>Pourquoi :</strong><br>Chaque pouce = une connexion réseau. Si vous connaissez quelqu'un, c'est <strong>vous</strong> qui faites l'intro.</div></div>
+      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--orange)"><div class="guide-action-num">📡</div><div class="guide-action-title">Signalez un cross-selling</div></div><div class="guide-action-body"><strong>Comment :</strong><br>→ Vous êtes en mission chez un client<br>→ Vous détectez un besoin dans un autre périmètre<br>→ 1 message à Guillaume ou Clarisse<br><br><strong>Pourquoi :</strong><br>1 signal × 50 consultants = 50 leads / semaine. C'est notre avantage compétitif.</div></div>
+      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--green)"><div class="guide-action-num">🤝</div><div class="guide-action-title">Partagez vos contacts ETI</div></div><div class="guide-action-body"><strong>Comment :</strong><br>→ Sara & Lisa vous contactent<br>→ Partagez 2 contacts minimum<br>→ Décideurs ETI, anciens clients<br><br><strong>Pourquoi :</strong><br>50 consultants × 2 contacts = 100 leads qualifiés. Puis on scale x10.</div></div>
     </div>
     <div class="guide-regles">
-      <div class="guide-regles-title">Les r&egrave;gles d'or</div>
-      <div class="guide-regle"><div class="guide-regle-icon">&#11088;</div>Avant d'inviter en froid, demandez d'abord : <strong>"Qui conna&icirc;t cette personne ?"</strong></div>
-      <div class="guide-regle"><div class="guide-regle-icon">&#9989;</div>Invitations LinkedIn : toujours <strong>sans note</strong> &mdash; message personnalis&eacute; APR&Egrave;S acceptation.</div>
-      <div class="guide-regle"><div class="guide-regle-icon">&#127919;</div>Un signal v&eacute;rifi&eacute; vaut 10 fois mieux qu'une invitation al&eacute;atoire.</div>
-      <div class="guide-regle"><div class="guide-regle-icon">&#128279;</div>Le r&eacute;seau BOOST = notre avantage comp&eacute;titif &mdash; chaque pouce compte.</div>
-      <div class="guide-regle"><div class="guide-regle-icon">&#9200;</div>Rituel hebdo : <strong>15 min en pl&eacute;ni&egrave;re</strong> &mdash; qui a d&eacute;tect&eacute; quoi ? qui conna&icirc;t qui ?</div>
+      <div class="guide-regles-title">Les règles d'or</div>
+      <div class="guide-regle"><div class="guide-regle-icon">⭐</div>Avant d'inviter en froid, demandez d'abord : <strong>"Qui connaît cette personne ?"</strong></div>
+      <div class="guide-regle"><div class="guide-regle-icon">✅</div>Invitations LinkedIn : toujours <strong>sans note</strong> — message personnalisé APRÈS acceptation.</div>
+      <div class="guide-regle"><div class="guide-regle-icon">🎯</div>Un signal vérifié vaut 10 fois mieux qu'une invitation aléatoire.</div>
+      <div class="guide-regle"><div class="guide-regle-icon">🔗</div>Le réseau BOOST = notre avantage compétitif — chaque pouce compte.</div>
+      <div class="guide-regle"><div class="guide-regle-icon">⏰</div>Rituel hebdo : <strong>15 min en plénière</strong> — qui a détecté quoi ? qui connaît qui ?</div>
     </div>
   </div>
 </div>
@@ -380,13 +452,13 @@ nav {
 <!-- MODAL -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
-    <h3>&#128077; Je connais ce contact</h3>
+    <h3>👍 Je connais ce contact</h3>
     <p id="modal-prospect-name" style="font-weight:600;color:var(--navy);font-size:15px;margin-bottom:4px;"></p>
-    <p>Entrez votre pr&eacute;nom pour signaler que vous connaissez ce contact.</p>
-    <input class="modal-input" id="modal-input" type="text" placeholder="Votre pr&eacute;nom&hellip;" maxlength="30"/>
+    <p>Entrez votre prénom pour signaler que vous connaissez ce contact.</p>
+    <input class="modal-input" id="modal-input" type="text" placeholder="Votre prénom…" maxlength="30"/>
     <div class="modal-btns">
       <button class="modal-btn secondary" onclick="closeModal()">Annuler</button>
-      <button class="modal-btn primary" onclick="confirmVote()">Confirmer &#128077;</button>
+      <button class="modal-btn primary" onclick="confirmVote()">Confirmer 👍</button>
     </div>
   </div>
 </div>
@@ -398,7 +470,7 @@ nav {
 <div class="modal-overlay" id="add-modal-overlay">
   <div class="modal modal-large">
     <h3>Ajouter un prospect</h3>
-    <p>Remplissez les informations &mdash; le prospect apparait instantanement dans le pipeline.</p>
+    <p>Remplissez les informations — le prospect apparait instantanement dans le pipeline.</p>
     <div class="modal-grid">
       <div class="modal-field full">
         <label>Nom complet *</label>
@@ -492,9 +564,9 @@ async function loadData() {
     setupRealtime();
   } catch(err) {
     document.getElementById('loader').innerHTML = `
-      <div style="color:var(--rose);font-family:Fraunces,serif;font-size:24px;margin-bottom:12px">&#9888;&#65039; Erreur</div>
+      <div style="color:var(--rose);font-family:Fraunces,serif;font-size:24px;margin-bottom:12px">⚠️ Erreur</div>
       <div style="color:rgba(255,255,255,.7);font-size:13px;max-width:320px;text-align:center;line-height:1.6">${err.message}</div>
-      <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:12px">V&eacute;rifiez que le SQL a bien &eacute;t&eacute; ex&eacute;cut&eacute; dans Supabase</div>`;
+      <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:12px">Vérifiez que le SQL a bien été exécuté dans Supabase</div>`;
   }
 }
 
@@ -515,7 +587,7 @@ function setupRealtime() {
     if(data){prospects=data; renderGrid(); updateKPIs();}
   }).subscribe(s=>{
     const badge=document.getElementById('realtime-badge'), dot=document.getElementById('rt-dot'), lbl=document.getElementById('rt-label');
-    if(s==='SUBSCRIBED'){badge.classList.remove('offline');dot.classList.remove('offline');lbl.textContent='Temps r&eacute;el actif';}
+    if(s==='SUBSCRIBED'){badge.classList.remove('offline');dot.classList.remove('offline');lbl.textContent='Temps réel actif';}
     else{badge.classList.add('offline');dot.classList.add('offline');lbl.textContent='Hors ligne';}
   });
 }
@@ -530,7 +602,7 @@ function renderCard(p) {
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <span class="card-jour">${p.jour}</span>
         <span class="card-secteur-tag ${secteurClass(p.secteur)}">${p.secteur}</span>
-        ${hasReseau?'<span class="reseau-badge">&#128279; R&eacute;seau</span>':''}
+        ${hasReseau?'<span class="reseau-badge">🔗 Réseau</span>':''}
       </div>
       <div class="card-score ${scoreClass(p.score)}">${p.score}<span style="font-size:12px;font-weight:400;color:var(--gray)">/130</span></div>
     </div>
@@ -539,14 +611,14 @@ function renderCard(p) {
       <div class="card-poste">${p.poste||''}</div>
       <div class="card-entreprise">${p.entreprise||''}</div>
     </div>
-    <div class="card-signal">&#9889; ${p.signal||''}</div>
+    <div class="card-signal">⚡ ${p.signal||''}</div>
     <div class="card-footer">
       <span class="card-statut ${p.statut==='connecte'?'statut-connecte':'statut-attente'}" onclick="toggleStatut(${p.id},'${p.statut}')">
-        ${p.statut==='connecte'?'&#9989; Connect&eacute;':'&#128232; En attente'}
+        ${p.statut==='connecte'?'✅ Connecté':'📨 En attente'}
       </span>
       <div class="thumb-zone">
         <button class="thumb-btn ${hasVoted?'voted':''}" onclick="openModal(${p.id},'${p.nom.replace(/'/g,"\\'")}')">
-          &#128077; <span class="thumb-count">${vl.length}</span>
+          👍 <span class="thumb-count">${vl.length}</span>
         </button>
         ${vl.length>0?`<span class="thumb-names">${vl.join(', ')}</span>`:''}
       </div>
@@ -562,7 +634,7 @@ function renderGrid() {
   if(currentSearch){const q=currentSearch.toLowerCase();filtered=filtered.filter(p=>(p.nom||'').toLowerCase().includes(q)||(p.entreprise||'').toLowerCase().includes(q)||(p.poste||'').toLowerCase().includes(q)||(p.signal||'').toLowerCase().includes(q));}
   filtered.sort((a,b)=>{const va=(votes[a.id]||[]).length,vb=(votes[b.id]||[]).length;return vb!==va?vb-va:b.score-a.score;});
   const grid=document.getElementById('prospects-grid');
-  grid.innerHTML=filtered.length===0?'<div class="empty-state" style="grid-column:1/-1"><div style="font-size:48px;margin-bottom:12px">&#128269;</div><div style="font-size:14px">Aucun prospect ne correspond</div></div>':filtered.map(renderCard).join('');
+  grid.innerHTML=filtered.length===0?'<div class="empty-state" style="grid-column:1/-1"><div style="font-size:48px;margin-bottom:12px">🔍</div><div style="font-size:14px">Aucun prospect ne correspond</div></div>':filtered.map(renderCard).join('');
   updateConvergences();
 }
 
@@ -573,7 +645,7 @@ function updateKPIs() {
   document.getElementById('kpi-attente').textContent=prospects.filter(p=>p.statut==='attente').length;
   document.getElementById('kpi-taux').textContent=total?Math.round(conn/total*100)+'%':'0%';
   document.getElementById('kpi-votes').textContent=Object.values(votes).reduce((s,v)=>s+v.length,0);
-  document.getElementById('pipeline-sub').textContent=`${total} contacts qualifi&eacute;s &middot; J1 &agrave; J5 &middot; ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`;
+  document.getElementById('pipeline-sub').textContent=`${total} contacts qualifiés · J1 à J5 · ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`;
 }
 
 function updateConvergences() {
@@ -581,7 +653,7 @@ function updateConvergences() {
   const mult=prospects.filter(p=>(votes[p.id]||[]).length>=2);
   if(!mult.length){banner.classList.remove('visible');return;}
   banner.classList.add('visible');
-  text.innerHTML=mult.map(p=>`<strong>${p.nom}</strong> (${p.entreprise}) &mdash; ${(votes[p.id]||[]).join(', ')} &rarr; <strong>activez l'intro !</strong>`).join('<br>');
+  text.innerHTML=mult.map(p=>`<strong>${p.nom}</strong> (${p.entreprise}) — ${(votes[p.id]||[]).join(', ')} → <strong>activez l'intro !</strong>`).join('<br>');
 }
 
 async function toggleStatut(id, current) {
@@ -589,8 +661,8 @@ async function toggleStatut(id, current) {
   const p=prospects.find(x=>x.id===id); if(!p) return;
   p.statut=newS; renderGrid(); updateKPIs();
   const {error}=await sb.from('prospects').update({statut:newS,updated_at:new Date().toISOString()}).eq('id',id);
-  if(error){p.statut=current;renderGrid();updateKPIs();showToast('&#10060; Erreur mise &agrave; jour');}
-  else showToast(newS==='connecte'?`&#9989; Connect&eacute; !`:`&#128232; Remis en attente`);
+  if(error){p.statut=current;renderGrid();updateKPIs();showToast('❌ Erreur mise à jour');}
+  else showToast(newS==='connecte'?`✅ Connecté !`:`📨 Remis en attente`);
 }
 
 function openModal(id,nom){pendingVoteId=id;document.getElementById('modal-prospect-name').textContent=nom;document.getElementById('modal-input').value='';document.getElementById('modal-overlay').classList.add('open');setTimeout(()=>document.getElementById('modal-input').focus(),100);}
@@ -600,9 +672,9 @@ async function confirmVote() {
   const prenom=document.getElementById('modal-input').value.trim(); if(!prenom){document.getElementById('modal-input').focus();return;}
   const id=pendingVoteId; closeModal();
   const {error}=await sb.from('votes').insert({prospect_id:id,consultant:prenom});
-  if(!error){myVotes.add(id);try{sessionStorage.setItem('boost_votes',JSON.stringify([...myVotes]));}catch(e){}showToast(`&#128077; ${prenom} &mdash; vote enregistr&eacute; !`);}
-  else if(error.code==='23505') showToast(`&#8505;&#65039; ${prenom} a d&eacute;j&agrave; vot&eacute; pour ce contact`);
-  else showToast('&#10060; Erreur: '+error.message);
+  if(!error){myVotes.add(id);try{sessionStorage.setItem('boost_votes',JSON.stringify([...myVotes]));}catch(e){}showToast(`👍 ${prenom} — vote enregistré !`);}
+  else if(error.code==='23505') showToast(`ℹ️ ${prenom} a déjà voté pour ce contact`);
+  else showToast('❌ Erreur: '+error.message);
 }
 
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
@@ -654,7 +726,7 @@ async function saveProspect(){
     votes[data.id]=[];
     renderGrid();
     updateKPIs();
-    showToast("Prospect ajoute au pipeline !");
+    showToast("Prospect ajouté au pipeline !");
   }
 }
 
