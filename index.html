@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOOST &middot; Machine de Prospection ETI</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --rose: #F4A096; --rose2: #FAE8E5; --rose3: #FDF6F4;
+  --navy: #1E2D3D; --navy2: #2D3E50;
+  --orange: #E8734A; --green: #27AE60; --green2: #E8F5EE;
+  --lavender: #7B7FB5; --gray: #8A8A9A; --gray2: #F4F4F6;
+  --shadow: 0 4px 24px rgba(30,45,61,0.10);
+  --shadow-sm: 0 2px 8px rgba(30,45,61,0.07);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--rose3); color:var(--navy); min-height:100vh; }
+
+#loader {
+  position:fixed; inset:0; background:var(--navy); z-index:9999;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+  transition: opacity .4s ease;
+}
+#loader.fade { opacity:0; pointer-events:none; }
+.loader-badge {
+  width:64px; height:64px; background:var(--rose); border-radius:16px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Fraunces',serif; font-size:36px; color:white;
+  animation: pulse 1.4s ease infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.loader-text { font-size:14px; color:rgba(255,255,255,.5); }
+.loader-bar { width:200px; height:3px; background:rgba(255,255,255,.1); border-radius:2px; overflow:hidden; }
+.loader-bar-fill { height:100%; background:var(--rose); border-radius:2px; animation: loading 1.5s ease infinite; }
+@keyframes loading { 0%{width:0;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0;margin-left:100%} }
+
+#realtime-badge {
+  position:fixed; bottom:20px; right:20px; z-index:500;
+  padding:6px 14px; border-radius:20px; font-size:11px; font-weight:600;
+  display:flex; align-items:center; gap:6px;
+  background:var(--green2); color:var(--green);
+  box-shadow:var(--shadow-sm); border:1px solid #c3e6d4; transition: all .3s;
+}
+#realtime-badge.offline { background:#FFF3CD; color:#C8860A; border-color:#fae29a; }
+.rt-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation: blink 2s ease infinite; }
+.rt-dot.offline { background:#C8860A; animation:none; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+nav {
+  background:var(--navy); padding:0 32px;
+  display:flex; align-items:center; justify-content:space-between;
+  height:56px; position:sticky; top:0; z-index:100;
+  box-shadow:0 2px 16px rgba(0,0,0,.2);
+}
+.nav-logo { display:flex; align-items:center; gap:12px; }
+.nav-logo-badge { width:32px; height:32px; background:var(--rose); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:18px; color:white; }
+.nav-logo-text { font-weight:600; font-size:15px; color:white; letter-spacing:-.3px; }
+.nav-logo-sub { font-size:11px; color:rgba(255,255,255,.45); margin-top:1px; }
+.nav-right { display:flex; align-items:center; gap:8px; }
+.nav-tab { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:none; transition:.2s; background:rgba(255,255,255,.08); color:rgba(255,255,255,.7); }
+.nav-tab.active { background:var(--rose); color:white; }
+.nav-tab:hover:not(.active) { background:rgba(255,255,255,.15); color:white; }
+
+.page { display:none; }
+.page.active { display:block; }
+
+.pipeline-header { background:var(--navy); padding:32px; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px; }
+.pipeline-title { font-family:'Fraunces',serif; font-size:32px; color:white; line-height:1.1; }
+.pipeline-sub { font-size:13px; color:rgba(255,255,255,.5); margin-top:6px; }
+
+.kpi-strip { display:flex; gap:12px; padding:20px 32px; background:var(--navy); border-bottom:1px solid rgba(255,255,255,.06); flex-wrap:wrap; }
+.kpi-pill { background:rgba(255,255,255,.08); border-radius:12px; padding:10px 18px; display:flex; flex-direction:column; gap:2px; }
+.kpi-pill-val { font-family:'Fraunces',serif; font-size:26px; color:white; line-height:1; }
+.kpi-pill-label { font-size:10px; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.7px; }
+.kpi-pill.green .kpi-pill-val { color:#4ADE80; }
+.kpi-pill.rose .kpi-pill-val { color:var(--rose); }
+.kpi-pill.orange .kpi-pill-val { color:#FBA96A; }
+
+.filters { padding:16px 32px; background:white; border-bottom:1px solid #EAEAEF; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.filter-btn { padding:5px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid #E0E0E8; background:white; color:var(--gray); transition:.15s; }
+.filter-btn.active { border-color:var(--navy); background:var(--navy); color:white; }
+.filter-btn:hover:not(.active) { border-color:var(--navy); color:var(--navy); }
+.filter-label { font-size:11px; color:var(--gray); font-weight:600; text-transform:uppercase; letter-spacing:.6px; }
+.search-box { margin-left:auto; padding:6px 14px; border-radius:20px; border:1.5px solid #E0E0E8; font-size:12px; font-family:'DM Sans',sans-serif; outline:none; width:200px; transition:.2s; }
+.search-box:focus { border-color:var(--navy); }
+
+.prospects-grid { padding:24px 32px; display:grid; gap:16px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.prospect-card { background:white; border-radius:16px; overflow:hidden; box-shadow:var(--shadow-sm); transition:.2s; border:1.5px solid transparent; animation: fadeUp .4s ease both; }
+.prospect-card:hover { box-shadow:var(--shadow); transform:translateY(-2px); border-color:#EAEAEF; }
+.prospect-card.connecte { border-color:var(--green); }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+.card-top { padding:16px 18px 12px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.card-jour { font-size:10px; font-weight:700; color:var(--rose); background:var(--rose2); padding:2px 8px; border-radius:6px; letter-spacing:.5px; }
+.card-score { font-family:'Fraunces',serif; font-size:22px; font-weight:600; line-height:1; }
+.card-score.high { color:var(--green); }
+.card-score.mid { color:var(--orange); }
+.card-score.low { color:var(--gray); }
+.card-main { padding:0 18px 14px; }
+.card-nom { font-family:'Fraunces',serif; font-size:18px; font-weight:600; color:var(--navy); }
+.card-poste { font-size:12px; color:var(--gray); margin-top:3px; line-height:1.4; }
+.card-entreprise { display:inline-block; margin-top:8px; padding:3px 10px; border-radius:8px; font-size:11px; font-weight:600; background:var(--gray2); color:var(--navy2); }
+.card-signal { margin:0 18px 12px; padding:10px 12px; border-radius:10px; background:var(--rose2); border-left:3px solid var(--rose); font-size:11px; color:var(--navy2); line-height:1.5; }
+
+.card-secteur-tag { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:600; margin-right:6px; }
+.s-mutuelles { background:#EEF4FF; color:var(--lavender); }
+.s-hospitality { background:#FFF5EE; color:var(--orange); }
+.s-pharma { background:#F0FFF4; color:#1A7A4A; }
+.s-logistique { background:#F5F0FF; color:#6C3483; }
+.s-distribution { background:#FFF0F5; color:#C0392B; }
+.s-industrie { background:#FFF9EE; color:#8B6914; }
+.s-agroalimentaire { background:#F0FFF8; color:#1A5C4A; }
+.s-tech { background:#EEF8FF; color:#1A4A8B; }
+.s-transport { background:#FFF0FA; color:#8B1A6C; }
+
+.card-footer { padding:10px 18px; border-top:1px solid #F0F0F6; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+.card-statut { font-size:11px; font-weight:600; padding:3px 10px; border-radius:10px; cursor:pointer; transition:.15s; }
+.statut-connecte { background:var(--green2); color:var(--green); }
+.statut-attente { background:#FFF3CD; color:#C8860A; }
+
+.thumb-zone { display:flex; align-items:center; gap:8px; }
+.thumb-btn { display:flex; align-items:center; gap:5px; padding:5px 10px; border-radius:20px; border:none; cursor:pointer; font-size:12px; font-weight:600; transition:.15s; background:var(--gray2); color:var(--gray); }
+.thumb-btn:hover { background:var(--rose2); color:var(--rose); }
+.thumb-btn.voted { background:var(--rose2); color:var(--rose); }
+.thumb-count { font-family:'Fraunces',serif; font-size:14px; color:var(--rose); min-width:16px; text-align:center; }
+.thumb-names { font-size:10px; color:var(--gray); max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.reseau-badge { font-size:10px; background:var(--green2); color:var(--green); padding:2px 8px; border-radius:6px; font-weight:600; }
+
+.convergences-banner { margin:0 32px 16px; padding:14px 18px; border-radius:12px; background:var(--green2); border:1.5px solid var(--green); display:none; align-items:flex-start; gap:12px; }
+.convergences-banner.visible { display:flex; }
+
+.modal-overlay { position:fixed; inset:0; background:rgba(30,45,61,.6); backdrop-filter:blur(4px); z-index:1000; display:none; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:white; border-radius:20px; padding:28px; width:360px; max-width:90vw; box-shadow:0 20px 60px rgba(0,0,0,.25); animation: modalIn .25s ease; }
+@keyframes modalIn { from { opacity:0; transform:scale(.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.modal h3 { font-family:'Fraunces',serif; font-size:20px; color:var(--navy); margin-bottom:6px; }
+.modal p { font-size:13px; color:var(--gray); margin-bottom:20px; line-height:1.5; }
+.modal-input { width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid #E0E0E8; font-size:14px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:16px; transition:.2s; }
+.modal-input:focus { border-color:var(--rose); }
+.modal-btns { display:flex; gap:10px; }
+.modal-btn { flex:1; padding:10px; border-radius:10px; border:none; cursor:pointer; font-size:13px; font-weight:600; font-family:'DM Sans',sans-serif; transition:.15s; }
+.modal-btn.primary { background:var(--rose); color:white; }
+.modal-btn.primary:hover { background:#E8907C; }
+.modal-btn.secondary { background:var(--gray2); color:var(--gray); }
+
+#toast { position:fixed; bottom:60px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--navy); color:white; padding:10px 20px; border-radius:12px; font-size:13px; font-weight:500; opacity:0; transition:.3s; z-index:2000; pointer-events:none; }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+.modal-large { width:560px; max-width:95vw; }
+.modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.modal-grid .full { grid-column:1/-1; }
+.modal-field label { display:block; font-size:11px; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+.modal-select { width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid #E0E0E8; font-size:13px; font-family:"DM Sans",sans-serif; outline:none; transition:.2s; background:white; color:var(--navy); }
+.modal-select:focus { border-color:var(--rose); }
+.score-display { font-family:"Fraunces",serif; font-size:32px; font-weight:600; color:var(--green); text-align:center; padding:10px; }
+.score-label { font-size:11px; color:var(--gray); text-align:center; margin-top:-8px; }
+.add-btn { position:fixed; bottom:20px; left:20px; z-index:500; width:48px; height:48px; border-radius:50%; background:var(--rose); border:none; cursor:pointer; font-size:24px; color:white; box-shadow:0 4px 16px rgba(244,160,150,.5); transition:.2s; display:flex; align-items:center; justify-content:center; }
+.add-btn:hover { transform:scale(1.1); background:#E8907C; }
+
+/* MODAL AJOUT PROSPECT */
+.modal-large { width:560px; max-width:95vw; }
+.modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.modal-grid .full { grid-column:1/-1; }
+.modal-field label { display:block; font-size:11px; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+.modal-select { width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid #E0E0E8; font-size:13px; font-family:'DM Sans',sans-serif; outline:none; transition:.2s; background:white; color:var(--navy); }
+.modal-select:focus { border-color:var(--rose); }
+.score-display { font-family:'Fraunces',serif; font-size:32px; font-weight:600; color:var(--green); text-align:center; padding:10px; }
+.score-label { font-size:11px; color:var(--gray); text-align:center; margin-top:-8px; }
+.add-btn { position:fixed; bottom:20px; left:20px; z-index:500; width:48px; height:48px; border-radius:50%; background:var(--rose); border:none; cursor:pointer; font-size:24px; color:white; box-shadow:0 4px 16px rgba(244,160,150,.5); transition:.2s; display:flex; align-items:center; justify-content:center; }
+.add-btn:hover { transform:scale(1.1); background:#E8907C; }
+
+.empty-state { text-align:center; padding:60px 24px; color:var(--gray); }
+
+.methode-wrap, .scoring-wrap, .guide-wrap { max-width:900px; margin:0 auto; padding:40px 24px; }
+.page-h1 { font-family:'Fraunces',serif; font-size:40px; color:var(--navy); margin-bottom:8px; }
+.page-sub { font-size:15px; color:var(--gray); margin-bottom:40px; line-height:1.6; }
+.section { margin-bottom:40px; }
+.section-title { font-family:'Fraunces',serif; font-size:22px; color:var(--navy); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.section-title::before { content:''; width:4px; height:24px; background:var(--rose); border-radius:2px; flex-shrink:0; }
+.phases-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.phase-card { border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); }
+.phase-head { padding:16px; font-weight:700; font-size:13px; color:white; line-height:1.4; }
+.phase-body { padding:16px; background:white; font-size:13px; color:var(--navy2); line-height:1.7; }
+.signals-list { display:flex; flex-direction:column; gap:8px; }
+.signal-item { display:flex; align-items:center; gap:12px; background:white; border-radius:12px; padding:14px 18px; box-shadow:var(--shadow-sm); }
+.signal-pts { font-family:'Fraunces',serif; font-size:22px; color:var(--rose); flex-shrink:0; width:52px; text-align:center; }
+.signal-title { font-weight:600; font-size:13px; color:var(--navy); }
+.signal-desc { font-size:12px; color:var(--gray); margin-top:2px; }
+.sources-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.source-item { background:white; border-radius:10px; padding:12px 16px; box-shadow:var(--shadow-sm); display:flex; gap:10px; align-items:flex-start; }
+.source-icon { font-size:20px; flex-shrink:0; }
+.source-title { font-weight:600; font-size:12px; color:var(--navy); }
+.source-desc { font-size:11px; color:var(--gray); margin-top:2px; line-height:1.4; }
+
+.scoring-total { background:var(--navy); border-radius:16px; padding:24px 28px; display:flex; gap:24px; flex-wrap:wrap; margin-bottom:32px; }
+.scoring-seuil { text-align:center; flex:1; min-width:100px; }
+.seuil-pts { font-family:'Fraunces',serif; font-size:28px; color:white; }
+.seuil-label { font-size:11px; color:rgba(255,255,255,.5); margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
+.seuil-desc { font-size:11px; margin-top:4px; font-weight:600; }
+.seuil-g { color:#4ADE80; } .seuil-o { color:#FBA96A; } .seuil-l { color:var(--lavender); } .seuil-gr { color:rgba(255,255,255,.35); }
+.critere-block { margin-bottom:24px; border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); }
+.critere-head { padding:14px 20px; display:flex; align-items:center; justify-content:space-between; }
+.critere-head-left { display:flex; align-items:center; gap:12px; }
+.critere-num { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.2); font-size:14px; font-weight:700; color:white; display:flex; align-items:center; justify-content:center; }
+.critere-name { font-weight:700; font-size:14px; color:white; }
+.critere-max { font-family:'Fraunces',serif; font-size:22px; color:white; }
+.critere-rows { background:white; }
+.critere-row { display:flex; align-items:center; padding:11px 20px; border-bottom:1px solid #F5F5F8; gap:12px; }
+.critere-row:last-child { border-bottom:none; }
+.critere-row-pts { font-family:'Fraunces',serif; font-size:16px; flex-shrink:0; width:44px; text-align:right; }
+.critere-row-desc { font-size:13px; color:var(--navy2); flex:1; }
+
+.guide-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:32px; }
+.guide-action-card { border-radius:16px; overflow:hidden; box-shadow:var(--shadow-sm); }
+.guide-action-head { padding:20px; color:white; }
+.guide-action-num { font-size:28px; margin-bottom:6px; }
+.guide-action-title { font-family:'Fraunces',serif; font-size:18px; font-weight:600; line-height:1.2; }
+.guide-action-body { padding:18px; background:white; font-size:13px; color:var(--navy2); line-height:1.7; }
+.guide-regles { background:var(--navy); border-radius:16px; padding:24px 28px; }
+.guide-regles-title { font-family:'Fraunces',serif; font-size:20px; color:var(--rose); margin-bottom:16px; }
+.guide-regle { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.07); font-size:13px; color:rgba(255,255,255,.8); line-height:1.5; }
+.guide-regle:last-child { border-bottom:none; }
+.guide-regle-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+
+@media(max-width:700px) {
+  .prospects-grid { grid-template-columns:1fr; padding:16px; }
+  .phases-grid, .guide-actions { grid-template-columns:1fr; }
+  .kpi-strip, .filters { padding:12px 16px; }
+  .methode-wrap, .scoring-wrap, .guide-wrap { padding:24px 16px; }
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-badge">B</div>
+  <div class="loader-text">Connexion &agrave; Supabase&hellip;</div>
+  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+</div>
+
+<div id="realtime-badge">
+  <div class="rt-dot" id="rt-dot"></div>
+  <span id="rt-label">Connexion&hellip;</span>
+</div>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-badge">B</div>
+    <div>
+      <div class="nav-logo-text">BOOST &middot; Machine de Prospection ETI</div>
+      <div class="nav-logo-sub">Julhiet Sterwen &middot; Avril 2026</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <button class="nav-tab active" onclick="showPage('pipeline',this)">&#128202; Pipeline</button>
+    <button class="nav-tab" onclick="showPage('methode',this)">&#127919; M&eacute;thode</button>
+    <button class="nav-tab" onclick="showPage('scoring',this)">&#128203; Scoring</button>
+    <button class="nav-tab" onclick="showPage('guide',this)">&#128214; Guide</button>
+  </div>
+</nav>
+
+<!-- PIPELINE -->
+<div id="page-pipeline" class="page active">
+  <div class="pipeline-header">
+    <div>
+      <div class="pipeline-title">Pipeline Prospection ETI</div>
+      <div class="pipeline-sub" id="pipeline-sub">Chargement&hellip;</div>
+    </div>
+  </div>
+  <div class="kpi-strip">
+    <div class="kpi-pill rose"><div class="kpi-pill-val" id="kpi-total">&mdash;</div><div class="kpi-pill-label">Prospects identifi&eacute;s</div></div>
+    <div class="kpi-pill green"><div class="kpi-pill-val" id="kpi-connectes">&mdash;</div><div class="kpi-pill-label">Connect&eacute;s LinkedIn</div></div>
+    <div class="kpi-pill orange"><div class="kpi-pill-val" id="kpi-attente">&mdash;</div><div class="kpi-pill-label">En attente r&eacute;ponse</div></div>
+    <div class="kpi-pill" style="background:rgba(123,127,181,.15)"><div class="kpi-pill-val" style="color:#A8ABDF" id="kpi-taux">&mdash;</div><div class="kpi-pill-label">Taux acceptation</div></div>
+    <div class="kpi-pill" style="background:rgba(244,160,150,.15);margin-left:auto"><div class="kpi-pill-val" style="color:var(--rose)" id="kpi-votes">&mdash;</div><div class="kpi-pill-label">&#128077; Pouces r&eacute;seau</div></div>
+  </div>
+  <div class="filters">
+    <span class="filter-label">Filtrer :</span>
+    <button class="filter-btn active" onclick="setFilter('tous',this)">Tous</button>
+    <button class="filter-btn" onclick="setFilter('connecte',this)">&#9989; Connect&eacute;s</button>
+    <button class="filter-btn" onclick="setFilter('Mutuelles',this)">Mutuelles</button>
+    <button class="filter-btn" onclick="setFilter('Hospitality',this)">Hospitality</button>
+    <button class="filter-btn" onclick="setFilter('Pharma',this)">Pharma</button>
+    <button class="filter-btn" onclick="setFilter('Logistique',this)">Logistique</button>
+    <button class="filter-btn" onclick="setFilter('votes',this)">&#128077; R&eacute;seau actif</button>
+    <input class="search-box" type="text" placeholder="&#128269; Rechercher&hellip;" oninput="setSearch(this.value)"/>
+  </div>
+  <div id="convergences-banner" class="convergences-banner">
+    <div style="font-size:22px">&#128279;</div>
+    <div style="font-size:13px;color:#1A6A4A;line-height:1.5">
+      <div style="font-weight:700;margin-bottom:3px">Convergences r&eacute;seau d&eacute;tect&eacute;es !</div>
+      <div id="convergences-text"></div>
+    </div>
+  </div>
+  <div class="prospects-grid" id="prospects-grid"></div>
+</div>
+
+<!-- M&Eacute;THODE -->
+<div id="page-methode" class="page">
+  <div class="methode-wrap">
+    <div class="page-h1">Notre m&eacute;thode de prospection</div>
+    <div class="page-sub">Comment on d&eacute;tecte, qualifie et contacte nos prospects ETI &mdash; de la veille au premier RDV</div>
+    <div class="section">
+      <div class="section-title">La d&eacute;marche en 3 phases</div>
+      <div class="phases-grid">
+        <div class="phase-card"><div class="phase-head" style="background:var(--rose)">&#128269; PHASE 1 &mdash; D&Eacute;TECTION<br><small style="font-weight:400;opacity:.85">En cours &middot; Avril &rarr; &Eacute;t&eacute; 2026</small></div><div class="phase-body">L'IA surveille <strong>8 alertes Google</strong> en temps r&eacute;el.<br><br>Signaux : nominations, lev&eacute;es de fonds, r&eacute;organisations, M&A, interviews.<br><br>Sources : presse sp&eacute;cialis&eacute;e, METI, LinkedIn, FAQ-Logistique&hellip;</div></div>
+        <div class="phase-card"><div class="phase-head" style="background:var(--orange)">&#9878;&#65039; PHASE 2 &mdash; QUALIFICATION<br><small style="font-weight:400;opacity:.85">Scoring sur 130 pts</small></div><div class="phase-body">Chaque prospect scor&eacute; sur <strong>5 crit&egrave;res</strong>.<br><br>Crit&egrave;re cl&eacute; : <strong>R&eacute;seau BOOST (30 pts)</strong> &mdash; un consultant conna&icirc;t-il cette personne ?<br><br>Seuil : &ge;70 pts pour inviter.</div></div>
+        <div class="phase-card"><div class="phase-head" style="background:var(--green)">&#128232; PHASE 3 &mdash; CONTACT<br><small style="font-weight:400;opacity:.85">LinkedIn first</small></div><div class="phase-body">Invitation LinkedIn <strong>sans note</strong>.<br><br>Message personnalis&eacute; <strong>apr&egrave;s acceptation uniquement</strong>.<br><br>R&egrave;gle d'or : chercher d'abord un lien r&eacute;seau BOOST.</div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Les signaux faibles qu'on surveille</div>
+      <div class="signals-list">
+        <div class="signal-item"><div class="signal-pts">40</div><div><div class="signal-title">&#9889; Nomination &lt; 30 jours</div><div class="signal-desc">Le signal le plus puissant. Nouveau dirigeant = feuille de route &agrave; construire.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">35</div><div><div class="signal-title">&#128176; Lev&eacute;e de fonds / M&A / AO</div><div class="signal-desc">Phase d'acc&eacute;l&eacute;ration. Besoin fort d'accompagnement transformation.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">30</div><div><div class="signal-title">&#128197; Nomination 30-90 jours</div><div class="signal-desc">Signal encore exploitable. Le dirigeant construit sa feuille de route.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">25</div><div><div class="signal-title">&#127959; Cr&eacute;ation nouvelle direction</div><div class="signal-desc">Tout est &agrave; structurer : gouvernance, process, &eacute;quipe.</div></div></div>
+        <div class="signal-item"><div class="signal-pts">20</div><div><div class="signal-title">&#128226; Interview / prise de parole</div><div class="signal-desc">Le dirigeant s'exprime = mode ouverture. Moment propice au premier contact.</div></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Nos sources de d&eacute;tection</div>
+      <div class="sources-grid">
+        <div class="source-item"><div class="source-icon">&#128202;</div><div><div class="source-title">Google Alerts (8 alertes actives)</div><div class="source-desc">Nominations, plans strat&eacute;giques &mdash; tous secteurs ETI &mdash; chaque matin</div></div></div>
+        <div class="source-item"><div class="source-icon">&#127976;</div><div><div class="source-title">TendanceHotellerie.fr</div><div class="source-desc">Nominations DG et directeurs dans l'h&ocirc;tellerie fran&ccedil;aise</div></div></div>
+        <div class="source-item"><div class="source-icon">&#127981;</div><div><div class="source-title">L'Usine Nouvelle</div><div class="source-desc">Nominations dirigeants industrie, pharma, agroalimentaire</div></div></div>
+        <div class="source-item"><div class="source-icon">&#128666;</div><div><div class="source-title">FAQ-Logistique.com</div><div class="source-desc">Nominations logistique, transport, supply chain</div></div></div>
+        <div class="source-item"><div class="source-icon">&#128309;</div><div><div class="source-title">Asquarepartners.com</div><div class="source-desc">Nominations mutuelles, assurance, protection sociale</div></div></div>
+        <div class="source-item"><div class="source-icon">&#127942;</div><div><div class="source-title">METI / European ETI Summit</div><div class="source-desc">Dirigeants ETI en vue, prises de parole, ETI Awards</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCORING -->
+<div id="page-scoring" class="page">
+  <div class="scoring-wrap">
+    <div class="page-h1">Grille de scoring</div>
+    <div class="page-sub">Comment on qualifie un prospect sur 130 points avant de le contacter</div>
+    <div class="scoring-total">
+      <div class="scoring-seuil"><div class="seuil-pts">130</div><div class="seuil-label">Score max</div></div>
+      <div style="width:1px;background:rgba(255,255,255,.1)"></div>
+      <div class="scoring-seuil"><div class="seuil-pts seuil-g">&ge; 90</div><div class="seuil-label">Priorit&eacute; absolue</div><div class="seuil-desc seuil-g">Intro via r&eacute;seau BOOST</div></div>
+      <div class="scoring-seuil"><div class="seuil-pts seuil-o">70-89</div><div class="seuil-label">On invite LinkedIn</div><div class="seuil-desc seuil-o">Invitation sans note</div></div>
+      <div class="scoring-seuil"><div class="seuil-pts seuil-l">50-69</div><div class="seuil-label">Veille active</div><div class="seuil-desc seuil-l">Si lien r&eacute;seau trouv&eacute;</div></div>
+      <div class="scoring-seuil"><div class="seuil-pts seuil-gr">&lt; 50</div><div class="seuil-label">Abandon</div><div class="seuil-desc seuil-gr">Hors cible</div></div>
+    </div>
+    <div class="critere-block"><div class="critere-head" style="background:var(--rose)"><div class="critere-head-left"><div class="critere-num">1</div><div class="critere-name">Le Signal</div></div><div class="critere-max">40 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">40</div><div class="critere-row-desc">Nomination &lt; 30 jours</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">35</div><div class="critere-row-desc">Lev&eacute;e de fonds / M&A / Appel d'offres</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">30</div><div class="critere-row-desc">Nomination 30-90 jours</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">25</div><div class="critere-row-desc">Cr&eacute;ation nouvelle direction ou entit&eacute;</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">20</div><div class="critere-row-desc">Interview strat&eacute;gique / prise de parole</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">10</div><div class="critere-row-desc">Signal &gt; 90 jours</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:var(--orange)"><div class="critere-head-left"><div class="critere-num">2</div><div class="critere-name">Le Profil D&eacute;cisionnel</div></div><div class="critere-max">25 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">25</div><div class="critere-row-desc">DG &middot; PDG &middot; CEO &middot; Pr&eacute;sident</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">20</div><div class="critere-row-desc">DGA &middot; COO &middot; CFO &middot; Secr&eacute;taire G&eacute;n&eacute;ral</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">Dir. Transformation &middot; DSI &middot; Dir. RH</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">Directeur m&eacute;tier</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">Manager sans pouvoir de d&eacute;cision</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:var(--lavender)"><div class="critere-head-left"><div class="critere-num">3</div><div class="critere-name">L'Entreprise</div></div><div class="critere-max">20 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">20</div><div class="critere-row-desc">ETI 500-5000 sal. &middot; ind&eacute;pendante ou familiale</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">18</div><div class="critere-row-desc">Scale-up en forte croissance (lev&eacute;e &gt; 10M&euro;)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">ETI 250-500 sal.</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">Filiale de grand groupe avec autonomie</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">Grand groupe / PME &lt; 250 sal.</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:var(--green)"><div class="critere-head-left"><div class="critere-num">4</div><div class="critere-name">Ancrage R&eacute;seau BOOST &#11088;</div></div><div class="critere-max">30 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">30</div><div class="critere-row-desc"><strong>Consultant BOOST en/ex-mission chez cette entreprise</strong></div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">25</div><div class="critere-row-desc">Consultant BOOST conna&icirc;t personnellement le contact</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">20</div><div class="critere-row-desc">Relation via client commun ou ancien coll&egrave;gue</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">15</div><div class="critere-row-desc">Contact dans r&eacute;seau 1er degr&eacute; d'un consultant</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">0</div><div class="critere-row-desc">Aucun lien r&eacute;seau identifi&eacute;</div></div></div></div>
+    <div class="critere-block"><div class="critere-head" style="background:#4EC9B0"><div class="critere-head-left"><div class="critere-num">5</div><div class="critere-name">Accessibilit&eacute; LinkedIn</div></div><div class="critere-max">15 pts</div></div><div class="critere-rows"><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">15</div><div class="critere-row-desc">1er degr&eacute; (d&eacute;j&agrave; connect&eacute;)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--green)">12</div><div class="critere-row-desc">2e degr&eacute; (ami d'un ami)</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--orange)">10</div><div class="critere-row-desc">3e degr&eacute; avec relation commune connue</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">5</div><div class="critere-row-desc">3e degr&eacute; sans relation commune</div></div><div class="critere-row"><div class="critere-row-pts" style="color:var(--gray)">0</div><div class="critere-row-desc">Profil priv&eacute; / non trouv&eacute;</div></div></div></div>
+  </div>
+</div>
+
+<!-- GUIDE -->
+<div id="page-guide" class="page">
+  <div class="guide-wrap">
+    <div class="page-h1">Guide des consultants</div>
+    <div class="page-sub">L'IA d&eacute;tecte les signaux publics. Vous, vous connaissez les gens. C'est la combinaison des deux qui cr&eacute;e le flux d'opportunit&eacute;s.</div>
+    <div class="guide-actions">
+      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--rose)"><div class="guide-action-num">&#128077;</div><div class="guide-action-title">Mettez un pouce sur un prospect</div></div><div class="guide-action-body"><strong>Comment :</strong><br>&rarr; Allez dans Pipeline<br>&rarr; Trouvez le prospect que vous connaissez<br>&rarr; Cliquez &#128077; et entrez votre pr&eacute;nom<br><br><strong>Pourquoi :</strong><br>Chaque pouce = une connexion r&eacute;seau. Si vous connaissez quelqu'un, c'est <strong>vous</strong> qui faites l'intro.</div></div>
+      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--orange)"><div class="guide-action-num">&#128225;</div><div class="guide-action-title">Signalez un cross-selling</div></div><div class="guide-action-body"><strong>Comment :</strong><br>&rarr; Vous &ecirc;tes en mission chez un client<br>&rarr; Vous d&eacute;tectez un besoin dans un autre p&eacute;rim&egrave;tre<br>&rarr; 1 message &agrave; Guillaume ou Clarisse<br><br><strong>Pourquoi :</strong><br>1 signal &times; 50 consultants = 50 leads / semaine. C'est notre avantage comp&eacute;titif.</div></div>
+      <div class="guide-action-card"><div class="guide-action-head" style="background:var(--green)"><div class="guide-action-num">&#129309;</div><div class="guide-action-title">Partagez vos contacts ETI</div></div><div class="guide-action-body"><strong>Comment :</strong><br>&rarr; Sara & Lisa vous contactent<br>&rarr; Partagez 2 contacts minimum<br>&rarr; D&eacute;cideurs ETI, anciens clients<br><br><strong>Pourquoi :</strong><br>50 consultants &times; 2 contacts = 100 leads qualifi&eacute;s. Puis on scale x10.</div></div>
+    </div>
+    <div class="guide-regles">
+      <div class="guide-regles-title">Les r&egrave;gles d'or</div>
+      <div class="guide-regle"><div class="guide-regle-icon">&#11088;</div>Avant d'inviter en froid, demandez d'abord : <strong>"Qui conna&icirc;t cette personne ?"</strong></div>
+      <div class="guide-regle"><div class="guide-regle-icon">&#9989;</div>Invitations LinkedIn : toujours <strong>sans note</strong> &mdash; message personnalis&eacute; APR&Egrave;S acceptation.</div>
+      <div class="guide-regle"><div class="guide-regle-icon">&#127919;</div>Un signal v&eacute;rifi&eacute; vaut 10 fois mieux qu'une invitation al&eacute;atoire.</div>
+      <div class="guide-regle"><div class="guide-regle-icon">&#128279;</div>Le r&eacute;seau BOOST = notre avantage comp&eacute;titif &mdash; chaque pouce compte.</div>
+      <div class="guide-regle"><div class="guide-regle-icon">&#9200;</div>Rituel hebdo : <strong>15 min en pl&eacute;ni&egrave;re</strong> &mdash; qui a d&eacute;tect&eacute; quoi ? qui conna&icirc;t qui ?</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>&#128077; Je connais ce contact</h3>
+    <p id="modal-prospect-name" style="font-weight:600;color:var(--navy);font-size:15px;margin-bottom:4px;"></p>
+    <p>Entrez votre pr&eacute;nom pour signaler que vous connaissez ce contact.</p>
+    <input class="modal-input" id="modal-input" type="text" placeholder="Votre pr&eacute;nom&hellip;" maxlength="30"/>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeModal()">Annuler</button>
+      <button class="modal-btn primary" onclick="confirmVote()">Confirmer &#128077;</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<button class="add-btn" onclick="openAddModal()" title="Ajouter un prospect">+</button>
+
+<div class="modal-overlay" id="add-modal-overlay">
+  <div class="modal modal-large">
+    <h3>Ajouter un prospect</h3>
+    <p>Remplissez les informations &mdash; le prospect apparait instantanement dans le pipeline.</p>
+    <div class="modal-grid">
+      <div class="modal-field full">
+        <label>Nom complet *</label>
+        <input class="modal-input" id="add-nom" type="text" placeholder="Ex: Marie Dupont" style="margin-bottom:0"/>
+      </div>
+      <div class="modal-field">
+        <label>Poste *</label>
+        <input class="modal-input" id="add-poste" type="text" placeholder="Ex: Directrice Generale" style="margin-bottom:0"/>
+      </div>
+      <div class="modal-field">
+        <label>Entreprise *</label>
+        <input class="modal-input" id="add-entreprise" type="text" placeholder="Ex: Groupe XYZ" style="margin-bottom:0"/>
+      </div>
+      <div class="modal-field">
+        <label>Secteur *</label>
+        <select class="modal-select" id="add-secteur">
+          <option value="Mutuelles">Mutuelles</option>
+          <option value="Pharma">Pharma</option>
+          <option value="Hospitality">Hospitality</option>
+          <option value="Logistique">Logistique</option>
+          <option value="Transport">Transport</option>
+          <option value="Industrie">Industrie</option>
+          <option value="Distribution">Distribution</option>
+          <option value="Agroalimentaire">Agroalimentaire</option>
+          <option value="Tech">Tech</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Priorite</label>
+        <select class="modal-select" id="add-jour">
+          <option value="J1">J1 - Priorite absolue</option>
+          <option value="J2">J2 - Haute priorite</option>
+          <option value="J3">J3 - Priorite moyenne</option>
+          <option value="J4">J4 - A surveiller</option>
+          <option value="J5">J5 - Veille</option>
+        </select>
+      </div>
+      <div class="modal-field full">
+        <label>Signal detecte *</label>
+        <input class="modal-input" id="add-signal" type="text" placeholder="Ex: Nomination DG mars 2026 - arrivee externe" style="margin-bottom:0"/>
+      </div>
+      <div class="modal-field full">
+        <label>Source</label>
+        <input class="modal-input" id="add-source" type="text" placeholder="Ex: L Usine Nouvelle, FAQ-Logistique..." style="margin-bottom:0"/>
+      </div>
+      <div class="modal-field full">
+        <label>Lien reseau BOOST</label>
+        <input class="modal-input" id="add-reseau" type="text" placeholder="Ex: Jean Dupont en commun, ou laisser vide" style="margin-bottom:0"/>
+      </div>
+      <div class="modal-field" style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--gray2);border-radius:12px;padding:12px">
+        <div class="score-display" id="add-score-display">70</div>
+        <div class="score-label">Score / 130</div>
+      </div>
+      <div class="modal-field" style="display:flex;flex-direction:column;gap:8px;justify-content:center">
+        <label>Ajuster le score</label>
+        <input type="range" id="add-score" min="50" max="130" value="70" oninput="document.getElementById('add-score-display').textContent=this.value" style="width:100%;accent-color:var(--rose)"/>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gray)"><span>50 Veille</span><span>130 Max</span></div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeAddModal()">Annuler</button>
+      <button class="modal-btn primary" onclick="saveProspect()">Ajouter au pipeline</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://thjefmyzysevexauwrlf.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_r8A8Z4lK1tUzJI1PwuOLYQ_V_izsVRp';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let prospects = [], votes = {}, currentFilter = 'tous', currentSearch = '', pendingVoteId = null;
+let myVotes = new Set();
+try { const s = sessionStorage.getItem('boost_votes'); if(s) myVotes = new Set(JSON.parse(s)); } catch(e){}
+
+async function loadData() {
+  try {
+    const [{ data: pd, error: pe }, { data: vd, error: ve }] = await Promise.all([
+      sb.from('prospects').select('*').order('jour').order('score', {ascending:false}),
+      sb.from('votes').select('*')
+    ]);
+    if (pe) throw pe;
+    if (ve) throw ve;
+    prospects = pd || [];
+    votes = {};
+    prospects.forEach(p => votes[p.id] = []);
+    (vd || []).forEach(v => { if(!votes[v.prospect_id]) votes[v.prospect_id]=[]; votes[v.prospect_id].push(v.consultant); });
+    hideLoader();
+    renderGrid();
+    updateKPIs();
+    setupRealtime();
+  } catch(err) {
+    document.getElementById('loader').innerHTML = `
+      <div style="color:var(--rose);font-family:Fraunces,serif;font-size:24px;margin-bottom:12px">&#9888;&#65039; Erreur</div>
+      <div style="color:rgba(255,255,255,.7);font-size:13px;max-width:320px;text-align:center;line-height:1.6">${err.message}</div>
+      <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:12px">V&eacute;rifiez que le SQL a bien &eacute;t&eacute; ex&eacute;cut&eacute; dans Supabase</div>`;
+  }
+}
+
+function hideLoader() {
+  const l = document.getElementById('loader');
+  l.classList.add('fade');
+  setTimeout(() => l.style.display='none', 400);
+}
+
+function setupRealtime() {
+  sb.channel('boost').on('postgres_changes',{event:'*',schema:'public',table:'votes'},async()=>{
+    const {data} = await sb.from('votes').select('*');
+    votes = {}; prospects.forEach(p=>votes[p.id]=[]);
+    (data||[]).forEach(v=>{if(!votes[v.prospect_id])votes[v.prospect_id]=[];votes[v.prospect_id].push(v.consultant);});
+    renderGrid(); updateKPIs();
+  }).on('postgres_changes',{event:'*',schema:'public',table:'prospects'},async()=>{
+    const {data} = await sb.from('prospects').select('*').order('jour').order('score',{ascending:false});
+    if(data){prospects=data; renderGrid(); updateKPIs();}
+  }).subscribe(s=>{
+    const badge=document.getElementById('realtime-badge'), dot=document.getElementById('rt-dot'), lbl=document.getElementById('rt-label');
+    if(s==='SUBSCRIBED'){badge.classList.remove('offline');dot.classList.remove('offline');lbl.textContent='Temps r&eacute;el actif';}
+    else{badge.classList.add('offline');dot.classList.add('offline');lbl.textContent='Hors ligne';}
+  });
+}
+
+function secteurClass(s){const m={'Mutuelles':'s-mutuelles','Hospitality':'s-hospitality','Pharma':'s-pharma','Logistique':'s-logistique','Distribution':'s-distribution','Industrie':'s-industrie','Agroalimentaire':'s-agroalimentaire','Tech':'s-tech','Transport':'s-transport'};return m[s]||'s-mutuelles';}
+function scoreClass(s){return s>=80?'high':s>=70?'mid':'low';}
+
+function renderCard(p) {
+  const vl=votes[p.id]||[], hasVoted=myVotes.has(p.id), hasReseau=p.reseau&&p.reseau.trim()!=='';
+  return `<div class="prospect-card ${p.statut==='connecte'?'connecte':''}" data-id="${p.id}">
+    <div class="card-top">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <span class="card-jour">${p.jour}</span>
+        <span class="card-secteur-tag ${secteurClass(p.secteur)}">${p.secteur}</span>
+        ${hasReseau?'<span class="reseau-badge">&#128279; R&eacute;seau</span>':''}
+      </div>
+      <div class="card-score ${scoreClass(p.score)}">${p.score}<span style="font-size:12px;font-weight:400;color:var(--gray)">/130</span></div>
+    </div>
+    <div class="card-main">
+      <div class="card-nom">${p.nom}</div>
+      <div class="card-poste">${p.poste||''}</div>
+      <div class="card-entreprise">${p.entreprise||''}</div>
+    </div>
+    <div class="card-signal">&#9889; ${p.signal||''}</div>
+    <div class="card-footer">
+      <span class="card-statut ${p.statut==='connecte'?'statut-connecte':'statut-attente'}" onclick="toggleStatut(${p.id},'${p.statut}')">
+        ${p.statut==='connecte'?'&#9989; Connect&eacute;':'&#128232; En attente'}
+      </span>
+      <div class="thumb-zone">
+        <button class="thumb-btn ${hasVoted?'voted':''}" onclick="openModal(${p.id},'${p.nom.replace(/'/g,"\\'")}')">
+          &#128077; <span class="thumb-count">${vl.length}</span>
+        </button>
+        ${vl.length>0?`<span class="thumb-names">${vl.join(', ')}</span>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderGrid() {
+  let filtered=[...prospects];
+  if(currentFilter==='connecte') filtered=filtered.filter(p=>p.statut==='connecte');
+  else if(currentFilter==='votes') filtered=filtered.filter(p=>(votes[p.id]||[]).length>0);
+  else if(currentFilter!=='tous') filtered=filtered.filter(p=>p.secteur===currentFilter);
+  if(currentSearch){const q=currentSearch.toLowerCase();filtered=filtered.filter(p=>(p.nom||'').toLowerCase().includes(q)||(p.entreprise||'').toLowerCase().includes(q)||(p.poste||'').toLowerCase().includes(q)||(p.signal||'').toLowerCase().includes(q));}
+  filtered.sort((a,b)=>{const va=(votes[a.id]||[]).length,vb=(votes[b.id]||[]).length;return vb!==va?vb-va:b.score-a.score;});
+  const grid=document.getElementById('prospects-grid');
+  grid.innerHTML=filtered.length===0?'<div class="empty-state" style="grid-column:1/-1"><div style="font-size:48px;margin-bottom:12px">&#128269;</div><div style="font-size:14px">Aucun prospect ne correspond</div></div>':filtered.map(renderCard).join('');
+  updateConvergences();
+}
+
+function updateKPIs() {
+  const total=prospects.length, conn=prospects.filter(p=>p.statut==='connecte').length;
+  document.getElementById('kpi-total').textContent=total;
+  document.getElementById('kpi-connectes').textContent=conn;
+  document.getElementById('kpi-attente').textContent=prospects.filter(p=>p.statut==='attente').length;
+  document.getElementById('kpi-taux').textContent=total?Math.round(conn/total*100)+'%':'0%';
+  document.getElementById('kpi-votes').textContent=Object.values(votes).reduce((s,v)=>s+v.length,0);
+  document.getElementById('pipeline-sub').textContent=`${total} contacts qualifi&eacute;s &middot; J1 &agrave; J5 &middot; ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`;
+}
+
+function updateConvergences() {
+  const banner=document.getElementById('convergences-banner'), text=document.getElementById('convergences-text');
+  const mult=prospects.filter(p=>(votes[p.id]||[]).length>=2);
+  if(!mult.length){banner.classList.remove('visible');return;}
+  banner.classList.add('visible');
+  text.innerHTML=mult.map(p=>`<strong>${p.nom}</strong> (${p.entreprise}) &mdash; ${(votes[p.id]||[]).join(', ')} &rarr; <strong>activez l'intro !</strong>`).join('<br>');
+}
+
+async function toggleStatut(id, current) {
+  const newS=current==='connecte'?'attente':'connecte';
+  const p=prospects.find(x=>x.id===id); if(!p) return;
+  p.statut=newS; renderGrid(); updateKPIs();
+  const {error}=await sb.from('prospects').update({statut:newS,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){p.statut=current;renderGrid();updateKPIs();showToast('&#10060; Erreur mise &agrave; jour');}
+  else showToast(newS==='connecte'?`&#9989; Connect&eacute; !`:`&#128232; Remis en attente`);
+}
+
+function openModal(id,nom){pendingVoteId=id;document.getElementById('modal-prospect-name').textContent=nom;document.getElementById('modal-input').value='';document.getElementById('modal-overlay').classList.add('open');setTimeout(()=>document.getElementById('modal-input').focus(),100);}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');pendingVoteId=null;}
+
+async function confirmVote() {
+  const prenom=document.getElementById('modal-input').value.trim(); if(!prenom){document.getElementById('modal-input').focus();return;}
+  const id=pendingVoteId; closeModal();
+  const {error}=await sb.from('votes').insert({prospect_id:id,consultant:prenom});
+  if(!error){myVotes.add(id);try{sessionStorage.setItem('boost_votes',JSON.stringify([...myVotes]));}catch(e){}showToast(`&#128077; ${prenom} &mdash; vote enregistr&eacute; !`);}
+  else if(error.code==='23505') showToast(`&#8505;&#65039; ${prenom} a d&eacute;j&agrave; vot&eacute; pour ce contact`);
+  else showToast('&#10060; Erreur: '+error.message);
+}
+
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+document.getElementById('modal-input').addEventListener('keydown',e=>{if(e.key==='Enter')confirmVote();});
+
+function setFilter(f,btn){currentFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderGrid();}
+function setSearch(v){currentSearch=v;renderGrid();}
+function showPage(p,btn){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');if(btn)btn.classList.add('active');}
+
+let toastT;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+
+
+function openAddModal(){
+  document.getElementById("add-nom").value="";
+  document.getElementById("add-poste").value="";
+  document.getElementById("add-entreprise").value="";
+  document.getElementById("add-signal").value="";
+  document.getElementById("add-source").value="";
+  document.getElementById("add-reseau").value="";
+  document.getElementById("add-score").value=70;
+  document.getElementById("add-score-display").textContent=70;
+  document.getElementById("add-modal-overlay").classList.add("open");
+  setTimeout(()=>document.getElementById("add-nom").focus(),100);
+}
+function closeAddModal(){document.getElementById("add-modal-overlay").classList.remove("open");}
+document.getElementById("add-modal-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeAddModal();});
+
+async function saveProspect(){
+  const nom=document.getElementById("add-nom").value.trim();
+  const poste=document.getElementById("add-poste").value.trim();
+  const entreprise=document.getElementById("add-entreprise").value.trim();
+  const signal=document.getElementById("add-signal").value.trim();
+  if(!nom||!poste||!entreprise||!signal){showToast("Remplissez les champs obligatoires *");return;}
+  const newP={
+    nom, poste, entreprise, signal,
+    secteur: document.getElementById("add-secteur").value,
+    jour: document.getElementById("add-jour").value,
+    source: document.getElementById("add-source").value.trim(),
+    reseau: document.getElementById("add-reseau").value.trim(),
+    score: parseInt(document.getElementById("add-score").value),
+    statut: "attente"
+  };
+  closeAddModal();
+  const {data,error}=await sb.from("prospects").insert(newP).select().single();
+  if(error){showToast("Erreur: "+error.message);}
+  else{
+    prospects.unshift(data);
+    votes[data.id]=[];
+    renderGrid();
+    updateKPIs();
+    showToast("Prospect ajoute au pipeline !");
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
